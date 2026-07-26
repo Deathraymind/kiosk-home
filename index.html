@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Idle</title>
+<style>
+  /* ---- config lives in the <script> at the bottom ---- */
+
+  :root {
+    --bg:      #05060a;
+    --ink:     #eef2fb;
+    --ink-dim: #7c8399;
+    --a1:      #2b3a67;  /* indigo  */
+    --a2:      #1f5c5c;  /* teal    */
+    --a3:      #3a2a5c;  /* violet  */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    overflow: hidden;
+    font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    /* kill any tap/selection/callout behaviour in WebView */
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ---- ambient background: a few blurred blobs that drift slowly.
+         transform + opacity only, so it stays on the compositor (cheap) ---- */
+  .aurora { position: fixed; inset: 0; z-index: 0; filter: blur(70px); }
+  .blob {
+    position: absolute;
+    width: 70vmin; height: 70vmin;
+    border-radius: 50%;
+    opacity: 0.55;
+    will-change: transform;
+  }
+  .b1 { background: var(--a1); top: -10%;  left: -15%; animation: drift1 34s ease-in-out infinite; }
+  .b2 { background: var(--a2); top: 40%;   left: 45%;  animation: drift2 42s ease-in-out infinite; }
+  .b3 { background: var(--a3); top: 65%;   left: -20%; animation: drift3 38s ease-in-out infinite; }
+
+  @keyframes drift1 { 50% { transform: translate(25vw, 30vh) scale(1.25); } }
+  @keyframes drift2 { 50% { transform: translate(-30vw, -20vh) scale(0.85); } }
+  @keyframes drift3 { 50% { transform: translate(20vw, -25vh) scale(1.15); } }
+
+  /* subtle vignette so the clock stays readable over the blobs */
+  .vignette {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(120% 90% at 50% 45%, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .stage {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 6vmin;
+  }
+
+  .time {
+    font-size: 26vmin;
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+  .time .sec {
+    font-size: 0.32em;
+    font-weight: 300;
+    color: var(--ink-dim);
+    vertical-align: 0.9em;
+    margin-left: 0.15em;
+    letter-spacing: 0;
+  }
+  .ampm {
+    font-size: 5vmin; font-weight: 300; color: var(--ink-dim);
+    letter-spacing: 0.25em; text-transform: uppercase;
+    margin-top: 2vmin;
+  }
+  .date {
+    margin-top: 4vmin;
+    font-size: 6vmin; font-weight: 300;
+    color: var(--ink-dim); letter-spacing: 0.02em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="aurora">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+  <div class="vignette"></div>
+
+  <div class="stage">
+    <div class="time" id="time">--:--</div>
+    <div class="ampm" id="ampm"></div>
+    <div class="date" id="date"></div>
+  </div>
+
+<script>
+  // ---------------- config ----------------
+  const CONFIG = {
+    hour24:      true,    // false -> 12h with AM/PM
+    showSeconds: true,    // small seconds beside the time
+    showDate:    true,
+  };
+  // ----------------------------------------
+
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  function tick() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = pad(now.getMinutes());
+    const s = pad(now.getSeconds());
+
+    let ampm = '';
+    if (!CONFIG.hour24) {
+      ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+    }
+    const hh = CONFIG.hour24 ? pad(h) : String(h);
+
+    $('time').innerHTML = hh + ':' + m +
+      (CONFIG.showSeconds ? '<span class="sec">' + s + '</span>' : '');
+    $('ampm').textContent = CONFIG.hour24 ? '' : ampm;
+
+    if (CONFIG.showDate) {
+      $('date').textContent =
+        DAYS[now.getDay()] + ', ' + MONTHS[now.getMonth()] + ' ' + now.getDate();
+    }
+  }
+
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
