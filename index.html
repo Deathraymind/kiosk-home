@@ -176,13 +176,6 @@
     }
     requestAnimationFrame(frame);
   }
-  // touch anywhere -> back to the dashboard (this is your night-time tap-to-wake;
-  // works alongside the PIR motion path during the day)
-  addEventListener("pointerdown", () => {
-    if (window.fully && fully.loadStartUrl) fully.loadStartUrl();  // Fully: go to Start URL
-    else if (DASHBOARD_URL) location.href = DASHBOARD_URL;         // fallback for a plain browser
-  });
-
   frame();
 </script>
 </body>
